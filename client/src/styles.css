@@ -1,5 +1,4 @@
 html {
-  font-size: 10px;
   font-family: sans-serif;
 }
 
@@ -14,7 +13,6 @@ html {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.6rem;
   --primary-color: #1266cc;
   --secondary-color: #f96400;
   --flash-color: rgb(89, 255, 0);
@@ -36,7 +34,6 @@ code {
   padding: 1.2rem 2rem;
   border-radius: 1rem;
   background-color: var(--light-gray);
-  font-size: 1.4rem;
 }
 
 code span {
@@ -96,7 +93,6 @@ hr {
 
 #App .container .welcome h1 {
   padding-top: 7.5rem;
-  font-size: 2.6rem;
 }
 
 #App .container .demo .contract-container {
@@ -127,7 +123,6 @@ hr {
   padding: 1rem 0;
   background-color: var(--light-gray);
   border: none;
-  font-size: 1.2rem;
   font-family: monospace;
   cursor: pointer;
 }
@@ -140,7 +135,6 @@ hr {
   width: 4rem;
   text-align: center;
   font-family: monospace;
-  font-size: 1.2rem;
 }
 
 #App .container footer {

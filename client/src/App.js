@@ -1,42 +1,42 @@
-import React, {  useEffect, useState } from "react";
+import React, { Component } from "react";
 import ItemManagerContract from "./contracts/ItemManager.json";
 import ItemContract from "./contracts/Item.json";
 import getWeb3 from "./getWeb3";
 
 import "./App.css";
+import provider from "./Context/provider";
+import Ethprovider from "./Context/provider";
+import Navbar from "./Components/Navbar";
 
-export default function App() {
-  const [state, setState] = useState({ loaded: false, cost: 0, itemName: 'Example_1' });
-  let web3;
-  let accounts;
-  let networkId;
-  let item;
-  let itemManager;
+class App extends Component {
+  state = { loaded: false, cost: 0, itemName: 'Example_1' };
 
-  async function init(){
+  componentDidMount = async () => {
     try {
       // Get network provider and web3 instance.
-      web3 = await getWeb3();
+      this.web3 = await getWeb3();
 
       // Use web3 to get the user's accounts.
-      accounts = await web3.eth.getAccounts();
+      this.accounts = await this.web3.eth.getAccounts();
 
       // Get the contract instance.
-      networkId = await web3.eth.net.getId();
+      const networkId = await this.web3.eth.net.getId();
       //const deployedNetwork = ItemManagerContract.networks[networkId];
-      itemManager = new web3.eth.Contract(
+      this.itemManager = new this.web3.eth.Contract(
         ItemManagerContract.abi,
         ItemManagerContract.networks[networkId] && ItemManagerContract.networks[networkId].address,
       );
 
-      item = new web3.eth.Contract(
+      this.item = new this.web3.eth.Contract(
         ItemContract.abi,
         ItemContract.networks[networkId] && ItemContract.networks[networkId].address,
       );
 
 
-      console.log(itemManager.methods)
-      setState(prev => ({...prev,loaded:true}))
+      // Set web3, accounts, and contract to the state, and then proceed with an
+      // example of interacting with the contract's methods.
+      this.setState({ loaded: true });
+      console.log(this.itemManager.methods)
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(
@@ -44,56 +44,55 @@ export default function App() {
       );
       console.error(error);
     }
-  }
+  };
 
-  useEffect(() => {
-    init();
-  }, [])
 
-  const handleInputChange = (event) => {
+  handleInputChange = (event) => {
     const target = event.target;
     const value = target.type === 'checkbox' ? target.checked : target.value;
     const name = target.name;
-    const json = {}
-    json[name] = value
-
-    setState(prev => ({ ...prev, ...json }));
+    this.setState({
+      [name]: value
+    });
   }
 
-  const handlePayment = async () => {
-    const { cost, itemName } = state;
-    console.log(itemName, cost, itemManager);
-    let result = await itemManager.methods.createItem(itemName, cost).send({ from: accounts[0] });
+  handlePayment = async () => {
+    const { cost, itemName } = this.state;
+    console.log(itemName, cost, this.itemManager);
+    let result = await this.itemManager.methods.createItem(itemName, cost).send({ from: this.accounts[0] });
     console.log(result);
     alert("Send " + cost + " Wei to " + result.events.SupplyChainStep.returnValues._address);
   };
 
-  const handleSubmit = async () => {
-  await itemManager.methods.index().call()
-  .then(result => {
-    console.log("My Number:", result);
-  })
-  .catch(err => {
-    console.error(err);
-  });
-    // let result = await this.web3.eth.sendTransaction({ from: this.accounts[0], to: "0x702a65dEd85f780F3ecfB15C44C48743338917Dc", value: 200, gas: 2000000 });
-    // console.log(result);
+  handleSubmit = async () => {
+    let result = await this.web3.eth.sendTransaction({ from: this.accounts[0], to: "0x702a65dEd85f780F3ecfB15C44C48743338917Dc", value: 200, gas: 2000000 });
+    console.log(result);
+    // alert();
   };
+  /* handleSubmit = async () => {
+  const {cost,itemName} = this.state;
+  await this.itemManager.methods.createItem(itemName,cost).send({from:this.accounts[0]});
+  } */
 
-
-  if (!(state.loaded)) {
-    return <div>Loading Web3, accounts, and contract...</div>;
+  render() {
+    if (!this.state.loaded) {
+      return <div>Loading Web3, accounts, and contract...</div>;
+    }
+    return (
+      <Ethprovider.Provider value={{}}>
+        <Navbar />
+        <div className="App">
+          <h1>Event trigger / Supply Chain Example</h1>
+          <h2>Items</h2>
+          <h2>Add Items</h2>
+          Cost in Wei:<input type='text' name='cost' value={this.state.cost} onChange={this.handleInputChange} /><br></br>
+          Item identifier:<input type='text' name='itemName' value={this.state.itemName} onChange={this.handleInputChange} />
+          <button type='button' onClick={this.handleSubmit}>pay</button>
+          <button type='button' onClick={this.handlePayment}>Create new item</button>
+        </div>
+      </Ethprovider.Provider>
+    );
   }
-  else {
-    return <div className="App">
-      <h1>Event trigger / Supply Chain Example</h1>
-      <h2>Items</h2>
-      <h2>Add Items</h2>
-      Cost in Wei:<input type='text' name='cost' value={state.cost} onChange={handleInputChange} /><br></br>
-      Item identifier:<input type='text' name='itemName' value={state.itemName} onChange={handleInputChange} />
-      <button type='button' onClick={handleSubmit}>pay</button>
-      <button type='button' onClick={handlePayment}>Create new item</button>
-    </div>
-  }
-
 }
+
+export default App;
