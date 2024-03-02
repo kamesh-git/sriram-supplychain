@@ -4,12 +4,11 @@ import ItemContract from "./contracts/Item.json";
 import getWeb3 from "./getWeb3";
 
 import "./App.css";
-import provider from "./Context/provider";
 import Ethprovider from "./Context/provider";
-import Navbar from "./Components/Navbar";
+import HomeScreen from "./Components/HomeScreen";
 
 class App extends Component {
-  state = { loaded: false, cost: 0, itemName: 'Example_1' };
+  state = { loaded: false, cost: 0, itemName: 'Example_1',items : [] };
 
   componentDidMount = async () => {
     try {
@@ -32,19 +31,27 @@ class App extends Component {
         ItemContract.networks[networkId] && ItemContract.networks[networkId].address,
       );
 
-
-      // Set web3, accounts, and contract to the state, and then proceed with an
-      // example of interacting with the contract's methods.
       this.setState({ loaded: true });
-      console.log(this.itemManager.methods)
+      this.getItems();
+      console.log(this.itemManager)
     } catch (error) {
       // Catch any errors for any of the above operations.
-      alert(
-        `Failed to load web3, accounts, or contract. Check console for details.`,
-      );
       console.error(error);
     }
   };
+
+  getItems = async () => {
+    const index = await this.itemManager.methods.index().call();
+    const items = []
+    for(let i = 0 ;i < index ; i++){
+      const item = await this.itemManager.methods.items(parseInt(i)).call();
+      items.push(item);
+
+    }
+    this.setState({items:items});
+
+    
+  }
 
 
   handleInputChange = (event) => {
@@ -56,40 +63,32 @@ class App extends Component {
     });
   }
 
-  handlePayment = async () => {
-    const { cost, itemName } = this.state;
+  handleCreate = async (itemName,cost) => {
     console.log(itemName, cost, this.itemManager);
     let result = await this.itemManager.methods.createItem(itemName, cost).send({ from: this.accounts[0] });
     console.log(result);
     alert("Send " + cost + " Wei to " + result.events.SupplyChainStep.returnValues._address);
+    this.getItems();
   };
 
-  handleSubmit = async () => {
-    let result = await this.web3.eth.sendTransaction({ from: this.accounts[0], to: "0x702a65dEd85f780F3ecfB15C44C48743338917Dc", value: 200, gas: 2000000 });
+  handleDeliver = async (index) => {
+    let result = await this.itemManager.methods.triggerDelivery(index).send({ from: this.accounts[0] });
     console.log(result);
-    // alert();
+    alert("Item delivery Triggered");
+    this.getItems();
   };
-  /* handleSubmit = async () => {
-  const {cost,itemName} = this.state;
-  await this.itemManager.methods.createItem(itemName,cost).send({from:this.accounts[0]});
-  } */
+
+  handlePayment = async (address,amount) => {
+    let result = await this.web3.eth.sendTransaction({ from: this.accounts[0], to: address, value: amount, gas: 2000000 });
+    console.log(result);
+    this.getItems();
+  };
+
 
   render() {
-    if (!this.state.loaded) {
-      return <div>Loading Web3, accounts, and contract...</div>;
-    }
     return (
-      <Ethprovider.Provider value={{}}>
-        <Navbar />
-        <div className="App">
-          <h1>Event trigger / Supply Chain Example</h1>
-          <h2>Items</h2>
-          <h2>Add Items</h2>
-          Cost in Wei:<input type='text' name='cost' value={this.state.cost} onChange={this.handleInputChange} /><br></br>
-          Item identifier:<input type='text' name='itemName' value={this.state.itemName} onChange={this.handleInputChange} />
-          <button type='button' onClick={this.handleSubmit}>pay</button>
-          <button type='button' onClick={this.handlePayment}>Create new item</button>
-        </div>
+      <Ethprovider.Provider value={{loaded:this.state.loaded,items:this.state.items,handlePayment:this.handlePayment,handleCreate:this.handleCreate,handleDeliver:this.handleDeliver}}>
+        <HomeScreen />
       </Ethprovider.Provider>
     );
   }

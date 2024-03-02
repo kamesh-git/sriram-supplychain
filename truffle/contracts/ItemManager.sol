@@ -11,6 +11,7 @@ contract ItemManager is Ownable {
         Item _item;
         ItemManager.SupplyChainSteps _step;
         string _identifier;
+        uint _priceInWei;
     }
     mapping(uint => S_Item) public items;
     uint public index;
@@ -29,6 +30,7 @@ contract ItemManager is Ownable {
 
         items[index]._step = SupplyChainSteps.Created;
         items[index]._identifier = _identifier;
+        items[index]._priceInWei = _priceInWei;
 
         emit SupplyChainStep(index, uint(items[index]._step), address(item));
 
@@ -51,8 +53,6 @@ contract ItemManager is Ownable {
     function triggerDelivery(uint _index) public onlyOwner {
         require(items[_index]._step == SupplyChainSteps.Paid, "Item is further in the supply chain");
         items[_index]._step = SupplyChainSteps.Delivered;
-
         emit SupplyChainStep(_index, uint(items[_index]._step), address(items[_index]._item));
-
     }
 }
